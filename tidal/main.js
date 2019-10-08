@@ -7,6 +7,26 @@
 // "date" is always a string representing a date, like "2019-01-01 09:45:00"
 // "time" is always a date represented in milliseconds
 
+// py -m http.server
+
+let loading_text = "loading";
+let loading = d3
+  .select("body")
+  .append("text")
+  .text(loading_text)
+  .attr("x", 0)
+  .attr("y", 20)
+  .style("fill", "black");
+
+let updateLoadingText = function() {
+  loading.text(function() {
+    loading_text += ".";
+    return loading_text;
+  });
+};
+
+let loadingTextInterval = setInterval(updateLoadingText, 500);
+
 let svg = d3
   .select("body")
   .append("svg")
@@ -92,4 +112,7 @@ let draw_locations = function() {
     loc.updateOutput();
     loc.draw();
   });
+
+  loading.remove();
+  clearInterval(loadingTextInterval);
 };
