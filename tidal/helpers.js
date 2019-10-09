@@ -20,6 +20,7 @@ Padding.prototype.applyTo = function(elem, width, height) {
   elem.attr("transform", "translate(" + this.left + ", " + this.top + ")");
 };
 
+/*
 let norm_time = function(time, bounds, box) {
   return (
     ((time - bounds.time_viewbox_min) /
@@ -35,6 +36,7 @@ let reverse_norm_time = function(time, bounds, box) {
     bounds.time_viewbox_min
   );
 };
+*/
 
 let norm_encoder = function(encoder, bounds, box) {
   return (

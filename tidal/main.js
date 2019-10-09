@@ -40,13 +40,9 @@ let svg = d3
   .attr("height", 600);
 
 let location_bounds = new Bounds();
-let location_box = svg.append("g");
-let location_box_padding = new Padding(50, 50, 50, 50);
-location_box_padding.applyTo(
-  location_box,
-  svg.attr("width"),
-  svg.attr("height")
-);
+let sample_box = svg.append("g");
+let sample_box_padding = new Padding(0, 50, 0, 50);
+sample_box_padding.applyTo(sample_box, svg.attr("width"), 100);
 
 let locations = [
   new Location(
@@ -54,22 +50,32 @@ let locations = [
     "Bella_Bella",
     "#76cca2",
     location_bounds,
-    location_box
+    sample_box,
+    null
   ),
   new Location(
     "Prince Rupert",
     "Prince_Rupert",
     "#45716e",
     location_bounds,
-    location_box
+    sample_box,
+    null
   ),
-  new Location("Tofino", "Tofino", "#3a6cc0", location_bounds, location_box),
+  new Location(
+    "Tofino",
+    "Tofino",
+    "#3a6cc0",
+    location_bounds,
+    sample_box,
+    null
+  ),
   new Location(
     "Vancouver",
     "Vancouver",
     "#58a7e4",
     location_bounds,
-    location_box
+    sample_box,
+    null
   )
 ];
 
@@ -109,10 +115,18 @@ locations.forEach(function(loc) {
 let draw_locations = function() {
   locations.forEach(function(loc) {
     loc.updateBounds();
-    loc.updateOutput();
-    loc.draw();
+  });
+
+  locations.forEach(function(loc) {
+    loc.drawSample();
   });
 
   loading.remove();
   clearInterval(loadingTextInterval);
+
+  let sampleSelector = new SampleSelector(location_bounds, sample_box);
+  sampleSelector.draw();
+
+  
+  
 };
