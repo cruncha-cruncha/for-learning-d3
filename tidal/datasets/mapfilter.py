@@ -9,7 +9,7 @@ OUTPUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "clean")
 
 INPUT_TIME_COL_NAME = "TIME_TAG UTC (Z+0)"
 
-OUTPUT_TIME_COL_NAME = "time"
+OUTPUT_TIME_COL_NAME = "time" # semantically date, but this is easier down the line
 OUTPUT_DATA_COL_NAME = "encoder"
 
 dirs = [

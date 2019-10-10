@@ -27,10 +27,18 @@ let updateLoadingText = function() {
 
 let loadingTextInterval = setInterval(updateLoadingText, 500);
 
-let svg = d3
-  .select("body")
-  .append("svg")
-  .attr("id", "svg")
+let svg1 = d3
+  .select("#svg1")
+  .attr(
+    "width",
+    $("body")
+      .first()
+      .innerWidth()
+  )
+  .attr("height", 100);
+
+let svg2 = d3
+  .select("#svg2")
   .attr(
     "width",
     $("body")
@@ -40,9 +48,12 @@ let svg = d3
   .attr("height", 600);
 
 let location_bounds = new Bounds();
-let sample_box = svg.append("g");
-let sample_box_padding = new Padding(0, 50, 0, 50);
-sample_box_padding.applyTo(sample_box, svg.attr("width"), 100);
+let sample_box = svg1.append("g");
+let sample_box_margin = new Margin(0, 50, 0, 50);
+sample_box_margin.applyTo(sample_box, svg1.attr("width"), svg1.attr("height"));
+let output_box = svg2.append("g");
+let output_box_margin = new Margin(50, 50, 50, 50);
+output_box_margin.applyTo(output_box, svg2.attr("width"), svg2.attr("height"));
 
 let locations = [
   new Location(
@@ -51,7 +62,7 @@ let locations = [
     "#76cca2",
     location_bounds,
     sample_box,
-    null
+    output_box
   ),
   new Location(
     "Prince Rupert",
@@ -59,7 +70,7 @@ let locations = [
     "#45716e",
     location_bounds,
     sample_box,
-    null
+    output_box
   ),
   new Location(
     "Tofino",
@@ -67,7 +78,7 @@ let locations = [
     "#3a6cc0",
     location_bounds,
     sample_box,
-    null
+    output_box
   ),
   new Location(
     "Vancouver",
@@ -75,7 +86,7 @@ let locations = [
     "#58a7e4",
     location_bounds,
     sample_box,
-    null
+    output_box
   )
 ];
 
@@ -125,8 +136,19 @@ let draw_locations = function() {
   clearInterval(loadingTextInterval);
 
   let sampleSelector = new SampleSelector(location_bounds, sample_box);
+  sampleSelector.updateViewboxLag();
   sampleSelector.draw();
 
-  
-  
+  locations.forEach(function(loc) {
+    loc.updateOutput();
+    loc.drawOutput();
+  });
+
+  d3.select("#updateOutput").on("click", function() {
+    locations.forEach(function(loc) {
+      loc.updateOutput();
+      loc.drawOutput();
+    });
+    sampleSelector.updateViewboxLag();
+  });
 };

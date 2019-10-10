@@ -7,16 +7,21 @@ function Location(name, dir, color, bounds, sample_box, output_box) {
   this.output_box = output_box;
   this.data = [];
   this.output = [];
+  this.output_lag = [];
   this.sample = [];
   this.done_read = false;
-
-  //if (!this.box.attr("height") || !this.box.attr("width")) return false;
+  this.DURATION = 1000;
 
   this.sample_box.append("g").attr("id", this.getSampleBoxId());
+  this.output_box.append("g").attr("id", this.getOutputBoxId());
 }
 
 Location.prototype.getSampleBoxId = function() {
   return "id_" + this.dir.toLowerCase() + "_sampleBox";
+};
+
+Location.prototype.getOutputBoxId = function() {
+  return "id_" + this.dir.toLowerCase() + "_outputBox";
 };
 
 Location.prototype.getEventName = function() {
@@ -28,7 +33,7 @@ Location.prototype.sortData = function(data) {
     throw "Data is null, in sortData, in " + this.name;
 
   data = data.sort(function(a, b) {
-    if (Date.parse(a.time) < Date.parse(b.time)) {
+    if (a.time < b.time) {
       return -1;
     } else {
       return 1;
@@ -133,7 +138,7 @@ Location.prototype.readData = function(files, dispatch) {
             return e;
           })
         ) {
-          this_loc.sortData(this_loc.data);
+          this_loc.data = this_loc.sortData(this_loc.data);
           this_loc.updateSample();
           this_loc.done_read = true;
           dispatch.call(this_loc.getEventName());
@@ -156,31 +161,6 @@ Location.prototype.updateViewbox = function(
   this.bounds.time_viewbox_max = time_viewbox_max;
 };
 
-Location.prototype.updateOutput = function() {
-  if (
-    this.data == null ||
-    this.data.length == 0 ||
-    bounds.time_viewbox_min == null ||
-    bounds.time_viewbox_max == null
-  )
-    throw "Bad values in updateOutput, in " + this.name;
-
-  let this_loc = this;
-
-  this.output = this.data.filter(function(d) {
-    if (
-      this_loc.bounds.time_viewbox_min <= d.time &&
-      d.time <= this_loc.bounds.time_viewbox_max
-    ) {
-      return true;
-    } else {
-      return false;
-    }
-  });
-
-  this.sortData(this.output);
-};
-
 Location.prototype.updateSample = function(sampleRate = 20) {
   if (this.data == null || this.data.length == 0)
     throw "Data is still null, in updateSample, in " + this.name;
@@ -190,8 +170,6 @@ Location.prototype.updateSample = function(sampleRate = 20) {
   });
 
   this.sample.push(this.data[this.data.length - 1]);
-
-  this.sortData(this.sample);
 };
 
 Location.prototype.drawSample = function() {
@@ -203,7 +181,11 @@ Location.prototype.drawSample = function() {
   let lineFunction = d3
     .line()
     .x(function(d) {
-      return SampleSelector.norm_time(d.time, this_loc.bounds, this_loc.sample_box);
+      return SampleSelector.norm_time(
+        d.time,
+        this_loc.bounds,
+        this_loc.sample_box
+      );
     })
     .y(function(d) {
       return norm_encoder(d.encoder, this_loc.bounds, this_loc.sample_box);
@@ -227,4 +209,174 @@ Location.prototype.drawSample = function() {
       return lineFunction(d);
     });
   path.exit().remove();
+};
+
+Location.prototype.updateOutput = function() {
+  if (
+    this.data == null ||
+    this.data.length == 0 ||
+    this.bounds.time_viewbox_min == null ||
+    this.bounds.time_viewbox_max == null
+  )
+    throw "Bad values in updateOutput, in " + this.name;
+
+  this.output_lag = this.output;
+
+  if (this.data.length < 3) {
+    this.output = this.data;
+    return;
+  }
+
+  let lower = 0;
+  let upper = this.data.length;
+
+  if (this.data[0].time < this.bounds.time_viewbox_min) {
+    for (let i = 0; i < this.data.length - 1; i++) {
+      if (
+        this.data[i].time < this.bounds.time_viewbox_min &&
+        this.data[i + 1].time >= this.bounds.time_viewbox_min
+      ) {
+        lower = i;
+        break;
+      }
+    }
+  }
+
+  for (let i = lower; i < this.data.length - 1; i++) {
+    if (
+      this.data[i].time <= this.bounds.time_viewbox_max &&
+      this.data[i + 1].time > this.bounds.time_viewbox_max
+    ) {
+      upper = i + 1;
+      break;
+    }
+  }
+
+  this.output = this.data.slice(lower, upper + 1);
+};
+
+Location.prototype.norm_output_time = function(time, bounds, box) {
+  return (
+    ((time - bounds.time_viewbox_min) /
+      (bounds.time_viewbox_max - bounds.time_viewbox_min)) *
+    box.attr("width")
+  );
+};
+
+Location.prototype.drawOutput = function() {
+  if (this.output == null || this.output.length == 0)
+    throw "Output is still null, in drawOutput, in " + this.name;
+
+  let this_loc = this;
+
+  let lineFunction = d3
+    .line()
+    .x(function(d) {
+      return this_loc.norm_output_time(
+        d.time,
+        this_loc.bounds,
+        this_loc.output_box
+      );
+    })
+    .y(function(d) {
+      return norm_encoder(d.encoder, this_loc.bounds, this_loc.output_box);
+    })
+    .curve(d3.curveLinear);
+
+  let box = this.output_box.select("#" + this_loc.getOutputBoxId());
+  let output_lag = box.selectAll("path").data()[0];
+  let path = box.selectAll("path").data([this_loc.output]);
+
+  if (path.empty()) {
+    // just straight draw this.output
+
+    path
+      .enter()
+      .append("path")
+      .style("stroke-width", 1)
+      .style("stroke", this_loc.color)
+      .style("fill", "none")
+      .attr("d", function(d) {
+        return lineFunction(d);
+      });
+  } else if (
+    this.bounds.time_viewbox_lag_min <= this.bounds.time_viewbox_min &&
+    this.bounds.time_viewbox_lag_max >= this.bounds.time_viewbox_max
+  ) {
+    // output_lag is a superset of this.output
+
+    let coef =
+      (this.bounds.time_viewbox_lag_max - this.bounds.time_viewbox_lag_min) /
+      (this.bounds.time_viewbox_max - this.bounds.time_viewbox_min);
+    let move =
+      ((this.output_box.attr("width") *
+        (this.bounds.time_viewbox_min - this.bounds.time_viewbox_lag_min)) /
+        (this.bounds.time_viewbox_lag_max - this.bounds.time_viewbox_lag_min)) *
+      coef;
+    move = -1 * move;
+
+    box
+      .attr("transform", "translate(0) scale(1, 1)")
+      .transition()
+      .duration(this_loc.DURATION)
+      .attr("transform", "translate(" + move + ") scale(" + coef + ", 1)")
+      .transition()
+      .duration(0)
+      .attr("transform", "translate(0) scale(1, 1)");
+
+    path
+      .transition()
+      .duration(0)
+      .delay(this_loc.DURATION)
+      .attr("d", function(d) {
+        return lineFunction(d);
+      });
+  } else {
+    let combined_output = this.getSuperSet(output_lag, this.output);
+
+    let coef =
+      (this.bounds.time_viewbox_max - this.bounds.time_viewbox_min) /
+      (this.bounds.time_viewbox_lag_max - this.bounds.time_viewbox_lag_min);
+    let move =
+      (this.output_box.attr("width") *
+        (this.bounds.time_viewbox_lag_min - this.bounds.time_viewbox_min)) /
+      (this.bounds.time_viewbox_lag_max - this.bounds.time_viewbox_lag_min);
+    move = -1 * move;
+
+    box
+      .attr("transform", "translate(" + move + ") scale(" + coef + ", 1)")
+      .transition()
+      .duration(this_loc.DURATION)
+      .attr("transform", "translate(0) scale(1, 1)");
+
+    path = box.selectAll("path").data([combined_output]);
+
+    path
+      .attr("d", function(d) {
+        return lineFunction(d);
+      })
+      .transition()
+      .delay(this_loc.DURATION)
+      .on("end", function() {
+        box
+          .selectAll("path")
+          .data([this_loc.output])
+          .attr("d", function(d) {
+            return lineFunction(d);
+          });
+      });
+  }
+};
+
+Location.prototype.getSuperSet = function(data_a, data_b) {
+  if (data_a[0].time > data_b[0].time) {
+    let tmp = data_a;
+    data_a = data_b;
+    data_b = tmp;
+  }
+
+  let start = this.data.indexOf(data_a[0]);
+  let end = this.data.indexOf(data_b[data_b.length - 1]);
+
+  return this.data.slice(start, end + 1);
 };
