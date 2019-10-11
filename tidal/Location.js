@@ -269,26 +269,24 @@ Location.prototype.drawOutput = function() {
 
   let this_loc = this;
 
-  let lineFunction = d3
-    .line()
-    .x(function(d) {
-      return this_loc.norm_output_time(
-        d.time,
-        this_loc.bounds,
-        this_loc.output_box
-      );
-    })
-    .y(function(d) {
-      return norm_encoder(d.encoder, this_loc.bounds, this_loc.output_box);
-    })
-    .curve(d3.curveLinear);
-
   let box = this.output_box.select("#" + this_loc.getOutputBoxId());
   let output_lag = box.selectAll("path").data()[0];
   let path = box.selectAll("path").data([this_loc.output]);
 
   if (path.empty()) {
-    // just straight draw this.output
+    let lineFunction = d3
+      .line()
+      .x(function(d) {
+        return this_loc.norm_output_time(
+          d.time,
+          this_loc.bounds,
+          this_loc.output_box
+        );
+      })
+      .y(function(d) {
+        return norm_encoder(d.encoder, this_loc.bounds, this_loc.output_box);
+      })
+      .curve(d3.curveLinear);
 
     path
       .enter()
@@ -299,71 +297,59 @@ Location.prototype.drawOutput = function() {
       .attr("d", function(d) {
         return lineFunction(d);
       });
-  } else if (
-    this.bounds.time_viewbox_lag_min <= this.bounds.time_viewbox_min &&
-    this.bounds.time_viewbox_lag_max >= this.bounds.time_viewbox_max
-  ) {
-    // output_lag is a superset of this.output
-
-    let coef =
-      (this.bounds.time_viewbox_lag_max - this.bounds.time_viewbox_lag_min) /
-      (this.bounds.time_viewbox_max - this.bounds.time_viewbox_min);
-    let move =
-      ((this.output_box.attr("width") *
-        (this.bounds.time_viewbox_min - this.bounds.time_viewbox_lag_min)) /
-        (this.bounds.time_viewbox_lag_max - this.bounds.time_viewbox_lag_min)) *
-      coef;
-    move = -1 * move;
-
-    box
-      .attr("transform", "translate(0) scale(1, 1)")
-      .transition()
-      .duration(this_loc.DURATION)
-      .attr("transform", "translate(" + move + ") scale(" + coef + ", 1)")
-      .transition()
-      .duration(0)
-      .attr("transform", "translate(0) scale(1, 1)");
-
-    path
-      .transition()
-      .duration(0)
-      .delay(this_loc.DURATION)
-      .attr("d", function(d) {
-        return lineFunction(d);
-      });
   } else {
     let combined_output = this.getSuperSet(output_lag, this.output);
 
-    let coef =
-      (this.bounds.time_viewbox_max - this.bounds.time_viewbox_min) /
-      (this.bounds.time_viewbox_lag_max - this.bounds.time_viewbox_lag_min);
-    let move =
-      (this.output_box.attr("width") *
-        (this.bounds.time_viewbox_lag_min - this.bounds.time_viewbox_min)) /
-      (this.bounds.time_viewbox_lag_max - this.bounds.time_viewbox_lag_min);
-    move = -1 * move;
-
-    box
-      .attr("transform", "translate(" + move + ") scale(" + coef + ", 1)")
-      .transition()
-      .duration(this_loc.DURATION)
-      .attr("transform", "translate(0) scale(1, 1)");
-
     path = box.selectAll("path").data([combined_output]);
 
+    let src_min = combined_output.indexOf(output_lag[0]);
+    let src_max = combined_output.indexOf(output_lag[output_lag.length - 1]);
+    let dst_min = combined_output.indexOf(this.output[0]);
+    let dst_max = combined_output.indexOf(this.output[this.output.length - 1]);
+
+    let output_box_width = this_loc.output_box.attr("width");
+
     path
-      .attr("d", function(d) {
-        return lineFunction(d);
+      .transition()
+      .duration(this_loc.DURATION)
+      .attrTween("d", function() {
+        return function(t) {
+          let lower = Math.round(src_min - t * (src_min - dst_min));
+          let upper = Math.round(src_max - t * (src_max - dst_max));
+          let subset = combined_output.slice(lower, upper + 1);
+
+          if (subset.length > 1000) {
+            let sampleRate = Math.floor(subset.length / 1000);
+            subset = subset.filter(function(d, i) {
+              return i % sampleRate == 0;
+            });
+          }
+
+          let lineFunction = d3
+            .line()
+            .x(function(d) {
+              return (
+                ((d.time - subset[0].time) /
+                  (subset[subset.length - 1].time - subset[0].time)) *
+                output_box_width
+              );
+            })
+            .y(function(d) {
+              return norm_encoder(
+                d.encoder,
+                this_loc.bounds,
+                this_loc.output_box
+              );
+            })
+            .curve(d3.curveLinear);
+
+          return lineFunction(subset);
+        };
       })
       .transition()
-      .delay(this_loc.DURATION)
-      .on("end", function() {
-        box
-          .selectAll("path")
-          .data([this_loc.output])
-          .attr("d", function(d) {
-            return lineFunction(d);
-          });
+      .duration(0)
+      .call(function() {
+        box.selectAll("path").data([this_loc.output]);
       });
   }
 };
@@ -373,6 +359,10 @@ Location.prototype.getSuperSet = function(data_a, data_b) {
     let tmp = data_a;
     data_a = data_b;
     data_b = tmp;
+  }
+
+  if (data_a[data_a.length - 1].time > data_b[data_b.length - 1].time) {
+    data_b = data_a;
   }
 
   let start = this.data.indexOf(data_a[0]);
