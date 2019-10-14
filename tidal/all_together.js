@@ -5,5 +5,7 @@ jQuery(function($) {
 
   @@include('./Location.js')
 
+  @@include('./CoastLine.js')
+
   @@include('./main.js')
 });

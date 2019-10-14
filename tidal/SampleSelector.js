@@ -180,7 +180,7 @@ SampleSelector.prototype.draw = function() {
     );
 };
 
-SampleSelector.prototype.updateViewboxLag = function() {
+SampleSelector.prototype.updateBounds = function() {
   this.bounds.time_viewbox_lag_min = this.bounds.time_viewbox_min;
   this.bounds.time_viewbox_lag_max = this.bounds.time_viewbox_max;
 };

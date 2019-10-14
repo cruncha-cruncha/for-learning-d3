@@ -1,3 +1,6 @@
+// display the name of the location in the respective color
+// clicking on the name will hide it from both the sample and the output, maybe put a line through the name?
+
 function Location(name, dir, color, bounds, sample_box, output_box) {
   this.name = name;
   this.dir = dir;
@@ -15,6 +18,14 @@ function Location(name, dir, color, bounds, sample_box, output_box) {
   this.sample_box.append("g").attr("id", this.getSampleBoxId());
   this.output_box.append("g").attr("id", this.getOutputBoxId());
 }
+
+Location.prototype.toggleHide = function() {
+  let tmp;
+  tmp = this.sample_box.select("#" + this.getSampleBoxId());
+  tmp.classed("hide", !tmp.classed("hide"));
+  tmp = this.output_box.select("#" + this.getOutputBoxId());
+  tmp.classed("hide", !tmp.classed("hide"));
+};
 
 Location.prototype.getSampleBoxId = function() {
   return "id_" + this.dir.toLowerCase() + "_sampleBox";
@@ -263,7 +274,7 @@ Location.prototype.norm_output_time = function(time, bounds, box) {
   );
 };
 
-Location.prototype.drawOutput = function() {
+Location.prototype.drawOutput = function(dispatch) {
   if (this.output == null || this.output.length == 0)
     throw "Output is still null, in drawOutput, in " + this.name;
 
@@ -300,8 +311,6 @@ Location.prototype.drawOutput = function() {
   } else {
     let combined_output = this.getSuperSet(output_lag, this.output);
 
-    path = box.selectAll("path").data([combined_output]);
-
     let src_min = combined_output.indexOf(output_lag[0]);
     let src_max = combined_output.indexOf(output_lag[output_lag.length - 1]);
     let dst_min = combined_output.indexOf(this.output[0]);
@@ -325,14 +334,21 @@ Location.prototype.drawOutput = function() {
             });
           }
 
+          lower =
+            this_loc.bounds.time_viewbox_lag_min -
+            t *
+              (this_loc.bounds.time_viewbox_lag_min -
+                this_loc.bounds.time_viewbox_min);
+          upper =
+            this_loc.bounds.time_viewbox_lag_max -
+            t *
+              (this_loc.bounds.time_viewbox_lag_max -
+                this_loc.bounds.time_viewbox_max);
+
           let lineFunction = d3
             .line()
             .x(function(d) {
-              return (
-                ((d.time - subset[0].time) /
-                  (subset[subset.length - 1].time - subset[0].time)) *
-                output_box_width
-              );
+              return ((d.time - lower) / (upper - lower)) * output_box_width;
             })
             .y(function(d) {
               return norm_encoder(
@@ -346,10 +362,8 @@ Location.prototype.drawOutput = function() {
           return lineFunction(subset);
         };
       })
-      .transition()
-      .duration(0)
-      .call(function() {
-        box.selectAll("path").data([this_loc.output]);
+      .on("end", function() {
+        dispatch.call(this_loc.getEventName());
       });
   }
 };

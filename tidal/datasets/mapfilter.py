@@ -5,6 +5,8 @@ import errno
 # taken from
 # http://tides.gc.ca/eng/data
 
+# http://www.naturalearthdata.com/downloads/10m-physical-vectors/
+
 OUTPUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "clean")
 
 INPUT_TIME_COL_NAME = "TIME_TAG UTC (Z+0)"

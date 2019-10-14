@@ -47,6 +47,21 @@ let svg2 = d3
   )
   .attr("height", 600);
 
+let svg3 = d3
+  .select("#svg3")
+  .attr(
+    "width",
+    $("body")
+      .first()
+      .innerWidth() / 2
+  )
+  .attr(
+    "height",
+    $("body")
+      .first()
+      .innerWidth() / 2
+  );
+
 let location_bounds = new Bounds();
 let sample_box = svg1.append("g");
 let sample_box_margin = new Margin(0, 50, 0, 50);
@@ -106,6 +121,8 @@ let location_dispatch = d3.dispatch(
   })
 );
 
+let coastLine = new CoastLine(locations, svg3);
+
 locations.forEach(function(loc) {
   loc.readData(files, location_dispatch);
   location_dispatch.on(loc.getEventName(), function() {
@@ -118,6 +135,10 @@ locations.forEach(function(loc) {
     });
 
     if (all_done) {
+      locations.forEach(function(loc) {
+        location_dispatch.on(loc.getEventName(), null);
+      });
+      coastLine.draw();
       draw_locations();
     }
   });
@@ -136,19 +157,37 @@ let draw_locations = function() {
   clearInterval(loadingTextInterval);
 
   let sampleSelector = new SampleSelector(location_bounds, sample_box);
-  sampleSelector.updateViewboxLag();
+  sampleSelector.updateBounds();
   sampleSelector.draw();
 
   locations.forEach(function(loc) {
     loc.updateOutput();
-    loc.drawOutput();
+    loc.drawOutput(null);
+  });
+
+  let barrier;
+
+  locations.forEach(function(loc, i) {
+    location_dispatch.on(loc.getEventName(), function() {
+      barrier[i] = true;
+      if (
+        barrier.every(e => {
+          return e;
+        })
+      ) {
+        sampleSelector.updateBounds();
+      }
+    });
   });
 
   d3.select("#updateOutput").on("click", function() {
+    barrier = locations.map(function() {
+      return false;
+    });
+
     locations.forEach(function(loc) {
       loc.updateOutput();
-      loc.drawOutput();
+      loc.drawOutput(location_dispatch);
     });
-    sampleSelector.updateViewboxLag();
   });
 };
