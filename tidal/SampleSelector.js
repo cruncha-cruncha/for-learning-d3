@@ -65,11 +65,10 @@ SampleSelector.prototype.draw = function() {
             this_class.bar_width +
             d3.event.dx;
 
-          if (
-            new_innerLeft >= box.select("#rightBar").attr("x") ||
-            0 > new_innerLeft + this_class.spill
-          ) {
-            return;
+          if (new_innerLeft >= box.select("#rightBar").attr("x")) {
+            new_innerLeft = box.select("#rightBar").attr("x") - 1;
+          } else if (0 >= new_innerLeft + this_class.spill) {
+            new_innerLeft = 0 - this_class.spill + 1;
           }
 
           box
@@ -108,11 +107,21 @@ SampleSelector.prototype.draw = function() {
           if (
             parseFloat(box.select("#leftBar").attr("x")) +
               this_class.bar_width >=
-              new_innerRight ||
-            new_innerRight + this_class.bar_width - this_class.spill >
-              this_class.sample_box.attr("width")
+            new_innerRight
           ) {
-            return;
+            new_innerRight =
+              parseFloat(box.select("#leftBar").attr("x")) +
+              this_class.bar_width +
+              1;
+          } else if (
+            new_innerRight + this_class.bar_width - this_class.spill >=
+            this_class.sample_box.attr("width")
+          ) {
+            new_innerRight =
+              parseFloat(this_class.sample_box.attr("width")) +
+              this_class.spill -
+              this_class.bar_width -
+              1;
           }
 
           box.select("#centerRect").attr("width", new_innerRight - innerLeft);
@@ -149,12 +158,22 @@ SampleSelector.prototype.draw = function() {
           let new_innerRight =
             parseFloat(box.select("#rightBar").attr("x")) + d3.event.dx;
 
-          if (
-            0 > new_innerLeft + this_class.spill ||
-            new_innerRight + this_class.bar_width - this_class.spill >
-              this_class.sample_box.attr("width")
+          if (0 >= new_innerLeft + this_class.spill) {
+            new_innerLeft = 0 - this_class.spill + 1;
+            new_innerRight =
+              new_innerLeft +
+              parseFloat(box.select("#centerRect").attr("width"));
+          } else if (
+            new_innerRight + this_class.bar_width - this_class.spill >=
+            this_class.sample_box.attr("width")
           ) {
-            return;
+            new_innerRight =
+              parseFloat(this_class.sample_box.attr("width")) +
+              this_class.spill -
+              this_class.bar_width -
+              1;
+            new_innerLeft =
+              new_innerRight - box.select("#centerRect").attr("width");
           }
 
           box
