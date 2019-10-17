@@ -1,6 +1,3 @@
-// display the name of the location in the respective color
-// clicking on the name will hide it from both the sample and the output, maybe put a line through the name?
-
 function Location(name, dir, color, bounds, sample_box, output_box) {
   this.name = name;
   this.dir = dir;

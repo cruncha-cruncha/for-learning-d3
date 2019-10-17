@@ -35,7 +35,7 @@ let svg1 = d3
       .first()
       .innerWidth()
   )
-  .attr("height", 100);
+  .attr("height", 150);
 
 let svg2 = d3
   .select("#svg2")
@@ -64,11 +64,15 @@ let svg3 = d3
 
 let location_bounds = new Bounds();
 let sample_box = svg1.append("g");
-let sample_box_margin = new Margin(0, 50, 0, 50);
+let sample_box_margin = new Margin(0, 50, 50, 50);
 sample_box_margin.applyTo(sample_box, svg1.attr("width"), svg1.attr("height"));
+let sample_scale_box = svg1.append("g");
+let sample_scale_box_margin = new Margin(100, 50, 0, 50);
+sample_scale_box_margin.applyTo(sample_scale_box, svg1.attr("width"), svg1.attr("height"));
 let output_box = svg2.append("g");
 let output_box_margin = new Margin(50, 50, 50, 50);
 output_box_margin.applyTo(output_box, svg2.attr("width"), svg2.attr("height"));
+
 
 let locations = [
   new Location(
@@ -122,6 +126,7 @@ let location_dispatch = d3.dispatch(
 );
 
 let coastLine = new CoastLine(locations, svg3);
+let locationScales = new LocationScales(location_bounds, sample_scale_box, output_box);
 
 locations.forEach(function(loc) {
   loc.readData(files, location_dispatch);
@@ -138,8 +143,10 @@ locations.forEach(function(loc) {
       locations.forEach(function(loc) {
         location_dispatch.on(loc.getEventName(), null);
       });
-      coastLine.draw();
       draw_locations();
+      coastLine.draw();
+      locationScales.drawSample();
+      locationScales.drawXoutput();
     }
   });
 });

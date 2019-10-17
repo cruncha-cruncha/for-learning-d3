@@ -7,5 +7,7 @@ jQuery(function($) {
 
   @@include('./CoastLine.js')
 
+  @@include('./LocationScales.js')
+
   @@include('./main.js')
 });
