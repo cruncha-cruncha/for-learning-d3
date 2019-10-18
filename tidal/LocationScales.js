@@ -2,10 +2,12 @@ function LocationScales(bounds, sample_box, output_box) {
   this.bounds = bounds;
   this.sample_box = sample_box;
   this.output_box = output_box;
+  this.TEXT_OFFSET = 5;
+  this.DURATION = 400;
 
   this.sample_box.append("g").attr("id", this.getSampleWeeksId());
   this.sample_box.append("g").attr("id", this.getSampleDaysId());
-  
+  this.sample_box.append("g").attr("id", this.getSampleDayTicksId());
   this.output_box.append("g").attr("id", this.getOutputEncoderId());
 }
 
@@ -17,34 +19,37 @@ LocationScales.prototype.getSampleDaysId = function() {
   return "id_sample_days_scale";
 };
 
+LocationScales.prototype.getSampleDayTicksId = function() {
+  return "id_sample_day_ticks_scale";
+};
+
 LocationScales.prototype.getOutputEncoderId = function() {
   return "id_output_encoder_scale";
 };
 
 LocationScales.prototype.drawSample = function() {
-  let four_hours = 1000 * 60 * 60 * 4;
-  let two_minutes = 1000 * 60 * 2;
   let one_day = 1000 * 60 * 60 * 24;
   let one_week = one_day * 7;
 
   let x;
-
-  x = this.bounds.time_min;
+  let this_scale = this;
 
   let weeks = [];
   x = this.bounds.time_min;
   while (x <= this.bounds.time_max) {
-    weeks.push({ name: moment(x).format("MMM D"), value: x, opacity: 1 });
+    weeks.push({ name: moment(x).format("MMM D"), value: x });
     x += one_week;
   }
-  weeks.push({ name: "", value: x, opacity: 1 });
-  weeks.push({
-    name: moment("October 1, 2019", "MMMM D, YYYY").format("MMM D"),
-    value: parseFloat(moment("October 1, 2019", "MMMM D, YYYY").valueOf()),
-    opacity: 0.5
-  });
+  weeks[0].name = "";
+  weeks.push({ name: "", value: x });
 
-  let this_scale = this;
+  if (weeks.length === 8) {
+    weeks[2].name = weeks[2].name.slice(0, 3);
+    weeks[3].name = weeks[3].name.slice(4);
+    weeks[4].name = weeks[4].name.slice(4);
+    weeks[5].name = weeks[5].name.slice(4);
+    weeks[6].name = weeks[6].name.slice(4);
+  }
 
   let enter_weeks = this.sample_box
     .select("#" + this.getSampleWeeksId())
@@ -69,17 +74,9 @@ LocationScales.prototype.drawSample = function() {
         this_scale.sample_box
       );
     })
-    .attr("y2", function(d, i) {
-      if (i == 0) {
-        return 40;
-      } else {
-        return 20;
-      }
-    })
+    .attr("y2", 20)
     .attr("stroke", "black")
-    .style("opacity", function(d) {
-      return d.opacity;
-    });
+    .style("opacity", 0.5);
 
   enter_weeks
     .append("text")
@@ -92,37 +89,57 @@ LocationScales.prototype.drawSample = function() {
           d.value,
           this_scale.bounds,
           this_scale.sample_box
-        ) + 5
+        ) + this_scale.TEXT_OFFSET
       );
     })
-    .attr("y", function(d, i) {
-      if (i == 0) {
-        return 38;
-      } else {
-        return 18;
-      }
-    })
-    .style("opacity", function(d) {
-      return d.opacity;
+    .attr("y", 18)
+    .style("opacity", 0.5);
+};
+
+LocationScales.prototype.drawDayTicks = function(innerLeft, innerRight) {
+  innerLeft = SampleSelector.reverse_norm_time(
+    innerLeft,
+    this.bounds,
+    this.sample_box
+  );
+  innerRight = SampleSelector.reverse_norm_time(
+    innerRight,
+    this.bounds,
+    this.sample_box
+  );
+
+  let utc_offset = 1000 * 60 * moment().utcOffset();
+  let one_day = 1000 * 60 * 60 * 24;
+  let one_week = one_day * 7;
+
+  let x;
+  let this_scale = this;
+
+  let ticks = [];
+  x = innerLeft - ((innerLeft + utc_offset) % one_day);
+  while (x < innerRight) {
+    if (this.bounds.time_min <= x && x < this.bounds.time_min + one_week) {
+      ticks.push({ name: moment(x).format("ddd")[0], value: x });
+    } else {
+      ticks.push({ name: "", value: x });
+    }
+    x += one_day;
+  }
+  if (this.bounds.time_min <= x && x < this.bounds.time_min + one_week) {
+    ticks.push({ name: moment(x).format("ddd")[0], value: x });
+  } else {
+    ticks.push({ name: "", value: x });
+  }
+
+  let tick_box_lines = this.sample_box
+    .select("#" + this.getSampleDayTicksId())
+    .selectAll("line")
+    .data(ticks, function(d) {
+      return d.value;
     });
 
-  let first_week = [];
-  x = this.bounds.time_min;
-  first_week.push({ name: moment(x).format("ddd")[0], value: x });
-  first_week.push({ name: moment((x += one_day)).format("ddd")[0], value: x });
-  first_week.push({ name: moment((x += one_day)).format("ddd")[0], value: x });
-  first_week.push({ name: moment((x += one_day)).format("ddd")[0], value: x });
-  first_week.push({ name: moment((x += one_day)).format("ddd")[0], value: x });
-  first_week.push({ name: moment((x += one_day)).format("ddd")[0], value: x });
-  first_week.push({ name: moment((x += one_day)).format("ddd")[0], value: x });
-
-  let enter_days = this.sample_box
-    .select("#" + this.getSampleDaysId())
-    .selectAll("line")
-    .data(first_week)
-    .enter();
-
-  enter_days
+  tick_box_lines
+    .enter()
     .append("line")
     .attr("x1", function(d) {
       return SampleSelector.norm_time(
@@ -139,11 +156,39 @@ LocationScales.prototype.drawSample = function() {
         this_scale.sample_box
       );
     })
-    .attr("y2", 20)
+    .attr("y2", 0)
     .attr("stroke", "black")
-    .style("opacity", 0.5);
+    .style("opacity", function(d) {
+      if (d.value % one_week === this_scale.bounds.time_min % one_week) {
+        return 0;
+      } else {
+        return 0.5;
+      }
+    })
+    .transition()
+    .duration(this_scale.DURATION)
+    .attr("y2", 5);
 
-  enter_days
+  tick_box_lines.exit().each(function() {
+    if (!d3.select(this).classed("in_transition")) {
+      d3.select(this)
+        .classed("in_transition", true)
+        .transition()
+        .duration(this_scale.DURATION)
+        .attr("y2", 0)
+        .remove();
+    }
+  });
+
+  let tick_box_text = this.sample_box
+    .select("#" + this.getSampleDayTicksId())
+    .selectAll("text")
+    .data(ticks, function(d) {
+      return d.value;
+    });
+
+  tick_box_text
+    .enter()
     .append("text")
     .text(function(d) {
       return d.name;
@@ -151,39 +196,41 @@ LocationScales.prototype.drawSample = function() {
     .attr("x", function(d) {
       return (
         SampleSelector.norm_time(
-          d.value,
+          d.value + one_day / 2,
           this_scale.bounds,
           this_scale.sample_box
-        ) + 5
+        ) -
+        this.getBBox().width / 2
       );
     })
     .attr("y", 18)
+    .style("opacity", 0)
+    .transition()
+    .duration(this_scale.DURATION)
     .style("opacity", 0.5);
-};
 
-/*
-let norm_encoder = function(encoder, bounds, box) {
-  return (
-    box.attr("height") -
-    ((encoder - bounds.encoder_min) /
-      (bounds.encoder_max - bounds.encoder_min)) *
-      box.attr("height")
-  );
+  tick_box_text.exit().each(function() {
+    if (!d3.select(this).classed("in_transition")) {
+      d3.select(this)
+        .classed("in_transition", true)
+        .transition()
+        .duration(this_scale.DURATION)
+        .style("opacity", 0)
+        .remove();
+    }
+  });
 };
-*/
 
 LocationScales.prototype.drawXoutput = function() {
-    console.log("here");
+  let x;
+  let this_scale = this;
 
-  let x = this.bounds.encoder_min;
   data = [];
-
+  x = this.bounds.encoder_min;
   while (x <= this.bounds.encoder_max) {
     data.push(x);
     x += 1;
   }
-
-  let this_scale = this;
 
   let enter_encoder = this.output_box
     .select("#" + this.getOutputEncoderId())
@@ -203,6 +250,24 @@ LocationScales.prototype.drawXoutput = function() {
     })
     .attr("stroke", "black")
     .style("opacity", 0.5);
-};
 
-LocationScales.prototype.drawYoutput = function() {};
+  enter_encoder
+    .append("text")
+    .text(function(d, i) {
+      if (i === 0 || i === data.length - 1 || i % 2 !== 1) {
+        return "";
+      } else {
+        return d;
+      }
+    })
+    .attr("x", function() {
+      return 0 - this.getBBox().width - this_scale.TEXT_OFFSET;
+    })
+    .attr("y", function(d) {
+      return (
+        norm_encoder(d, this_scale.bounds, this_scale.output_box) +
+        this.getBBox().height / 3
+      );
+    })
+    .style("opacity", 0.5);
+};

@@ -118,7 +118,8 @@ Location.prototype.filterRead = function(read) {
     throw "Read is null, in filterRead, in " + this.name;
 
   read = read.map(function(row) {
-    row.time = Date.parse(row.time);
+    // like 2019-09-29 0:00 or 2019-09-29 10:15
+    row.time = moment(row.time, "YYYY-MM-DD H:mm").valueOf();
     return row;
   });
 
