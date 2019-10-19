@@ -306,6 +306,8 @@ Location.prototype.drawOutput = function(dispatch) {
       .attr("d", function(d) {
         return lineFunction(d);
       });
+
+    dispatch.call(this_loc.getEventName());
   } else {
     let combined_output = this.getSuperSet(output_lag, this.output);
 

@@ -13,24 +13,6 @@
 
 // add scales to selection and output
 
-let loading_text = "loading";
-let loading = d3
-  .select("body")
-  .append("text")
-  .text(loading_text)
-  .attr("x", 0)
-  .attr("y", 20)
-  .style("fill", "black");
-
-let updateLoadingText = function() {
-  loading.text(function() {
-    loading_text += ".";
-    return loading_text;
-  });
-};
-
-let loadingTextInterval = setInterval(updateLoadingText, 500);
-
 let svg1 = d3
   .select("#svg1")
   .attr(
@@ -49,7 +31,7 @@ let svg2 = d3
       .first()
       .innerWidth()
   )
-  .attr("height", 600);
+  .attr("height", 620);
 
 let svg3 = d3
   .select("#svg3")
@@ -68,18 +50,28 @@ let svg3 = d3
 
 let location_bounds = new Bounds();
 let sample_box = svg1.append("g");
-let sample_box_margin = new Margin(0, 50, 50, 50);
+let sample_box_margin = new Margin(20, 50, 30, 50);
 sample_box_margin.applyTo(sample_box, svg1.attr("width"), svg1.attr("height"));
 let sample_scale_box = svg1.append("g");
-let sample_scale_box_margin = new Margin(100, 50, 0, 50);
+let sample_scale_box_margin = new Margin(120, 50, 0, 50);
 sample_scale_box_margin.applyTo(
   sample_scale_box,
   svg1.attr("width"),
   svg1.attr("height")
 );
 let output_box = svg2.append("g");
-let output_box_margin = new Margin(50, 50, 50, 50);
+let output_box_margin = new Margin(0, 50, 20, 50);
 output_box_margin.applyTo(output_box, svg2.attr("width"), svg2.attr("height"));
+let output_Y_scale_box = svg2.append("g");
+let output_Y_scale_box_margin = new Margin(0, 0, 20, 0);
+output_Y_scale_box_margin.applyTo(output_Y_scale_box, 50, svg2.attr("height"));
+let output_X_scale_box = svg2.append("g");
+let output_X_scale_box_margin = new Margin(600, 50, 0, 50);
+output_X_scale_box_margin.applyTo(
+  output_X_scale_box,
+  svg2.attr("width"),
+  svg2.attr("height")
+);
 
 let locations = [
   new Location(
@@ -133,11 +125,6 @@ let location_dispatch = d3.dispatch(
 );
 
 let coastLine = new CoastLine(locations, svg3);
-let locationScales = new LocationScales(
-  location_bounds,
-  sample_scale_box,
-  output_box
-);
 
 locations.forEach(function(loc) {
   loc.readData(files, location_dispatch);
@@ -156,8 +143,6 @@ locations.forEach(function(loc) {
       });
       draw_locations();
       coastLine.draw();
-      locationScales.drawSample();
-      locationScales.drawXoutput();
     }
   });
 });
@@ -171,8 +156,13 @@ let draw_locations = function() {
     loc.drawSample();
   });
 
-  loading.remove();
-  clearInterval(loadingTextInterval);
+  let locationScales = new LocationScales(
+    location_bounds,
+    sample_scale_box,
+    output_Y_scale_box,
+    output_X_scale_box
+  );
+  locationScales.drawSample();
 
   let sampleSelector = new SampleSelector(
     location_bounds,
@@ -181,11 +171,6 @@ let draw_locations = function() {
   );
   sampleSelector.updateBounds();
   sampleSelector.draw();
-
-  locations.forEach(function(loc) {
-    loc.updateOutput();
-    loc.drawOutput(null);
-  });
 
   let barrier;
 
@@ -198,6 +183,7 @@ let draw_locations = function() {
         })
       ) {
         sampleSelector.updateBounds();
+        locationScales.drawXoutput();
       }
     });
   });
@@ -206,6 +192,9 @@ let draw_locations = function() {
     barrier = locations.map(function() {
       return false;
     });
+
+    locationScales.drawYoutput();
+    locationScales.removeXoutput();
 
     locations.forEach(function(loc) {
       loc.updateOutput();

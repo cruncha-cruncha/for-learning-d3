@@ -1,14 +1,14 @@
-function LocationScales(bounds, sample_box, output_box) {
+function LocationScales(bounds, sample_box, output_Y_box, output_X_box) {
   this.bounds = bounds;
   this.sample_box = sample_box;
-  this.output_box = output_box;
+  this.output_Y_box = output_Y_box;
+  this.output_X_box = output_X_box;
   this.TEXT_OFFSET = 5;
   this.DURATION = 400;
 
   this.sample_box.append("g").attr("id", this.getSampleWeeksId());
   this.sample_box.append("g").attr("id", this.getSampleDaysId());
   this.sample_box.append("g").attr("id", this.getSampleDayTicksId());
-  this.output_box.append("g").attr("id", this.getOutputEncoderId());
 }
 
 LocationScales.prototype.getSampleWeeksId = function() {
@@ -180,6 +180,10 @@ LocationScales.prototype.drawDayTicks = function(innerLeft, innerRight) {
     }
   });
 
+  if (ticks[ticks.length - 1].name !== "") {
+    ticks.pop();
+  }
+
   let tick_box_text = this.sample_box
     .select("#" + this.getSampleDayTicksId())
     .selectAll("text")
@@ -221,7 +225,7 @@ LocationScales.prototype.drawDayTicks = function(innerLeft, innerRight) {
   });
 };
 
-LocationScales.prototype.drawXoutput = function() {
+LocationScales.prototype.drawYoutput = function() {
   let x;
   let this_scale = this;
 
@@ -232,21 +236,39 @@ LocationScales.prototype.drawXoutput = function() {
     x += 1;
   }
 
-  let enter_encoder = this.output_box
-    .select("#" + this.getOutputEncoderId())
+  this.output_Y_box.selectAll("line").remove();
+  this.output_Y_box.selectAll("text").remove();
+
+  this.output_Y_box
+    .append("text")
+    .text("metres")
+    .attr("x", 30)
+    .attr("y", this_scale.output_Y_box.attr("height"))
+    .style("opacity", 0.5)
+    .attr("transform", function() {
+      return (
+        "rotate(-90," +
+        d3.select(this).attr("x") +
+        "," +
+        d3.select(this).attr("y") +
+        ")"
+      );
+    });
+
+  let enter_encoder = this.output_Y_box
     .selectAll("line")
     .data(data)
     .enter();
 
   enter_encoder
     .append("line")
-    .attr("x1", 0)
+    .attr("x1", 40)
     .attr("y1", function(d) {
-      return norm_encoder(d, this_scale.bounds, this_scale.output_box);
+      return norm_encoder(d, this_scale.bounds, this_scale.output_Y_box);
     })
-    .attr("x2", 20)
+    .attr("x2", 50)
     .attr("y2", function(d) {
-      return norm_encoder(d, this_scale.bounds, this_scale.output_box);
+      return norm_encoder(d, this_scale.bounds, this_scale.output_Y_box);
     })
     .attr("stroke", "black")
     .style("opacity", 0.5);
@@ -261,13 +283,74 @@ LocationScales.prototype.drawXoutput = function() {
       }
     })
     .attr("x", function() {
-      return 0 - this.getBBox().width - this_scale.TEXT_OFFSET;
+      return 40 - this.getBBox().width - this_scale.TEXT_OFFSET;
     })
     .attr("y", function(d) {
       return (
-        norm_encoder(d, this_scale.bounds, this_scale.output_box) +
+        norm_encoder(d, this_scale.bounds, this_scale.output_Y_box) +
         this.getBBox().height / 3
       );
     })
+    .style("opacity", 0.5);
+};
+
+LocationScales.prototype.removeXoutput = function() {
+  this.output_X_box.selectAll("line").remove();
+};
+
+LocationScales.prototype.drawXoutput = function() {
+  let utc_offset = 1000 * 60 * moment().utcOffset();
+  let one_hour = 1000 * 60 * 60;
+  let one_day = 1000 * 60 * 60 * 24;
+  let one_week = one_day * 7;
+
+  let x;
+  let this_scale = this;
+
+  let ticks = [];
+  if ((this.bounds.time_viewbox_min + utc_offset) % one_day < one_hour) {
+    x = this.bounds.time_viewbox_min;
+  } else {
+    x =
+      this.bounds.time_viewbox_min -
+      ((this.bounds.time_viewbox_min + utc_offset) % one_day);
+  }
+  while (x < this.bounds.time_viewbox_max + one_hour) {
+    if (x % one_week === this_scale.bounds.time_min % one_week) {
+      ticks.push({ value: x, length: 20 });
+    } else {
+      ticks.push({ value: x, length: 8 });
+    }
+    x += one_day;
+  }
+
+  let tick_box = this.output_X_box.selectAll("line").data(ticks, function(d) {
+    return d.value;
+  });
+
+  tick_box
+    .enter()
+    .append("line")
+    .attr("x1", function(d) {
+      return (
+        ((d.value - this_scale.bounds.time_viewbox_min) /
+          (this_scale.bounds.time_viewbox_max -
+            this_scale.bounds.time_viewbox_min)) *
+        this_scale.output_X_box.attr("width")
+      );
+    })
+    .attr("y1", 0)
+    .attr("x2", function(d) {
+      return (
+        ((d.value - this_scale.bounds.time_viewbox_min) /
+          (this_scale.bounds.time_viewbox_max -
+            this_scale.bounds.time_viewbox_min)) *
+        this_scale.output_X_box.attr("width")
+      );
+    })
+    .attr("y2", function(d) {
+      return d.length;
+    })
+    .attr("stroke", "black")
     .style("opacity", 0.5);
 };
