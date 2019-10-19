@@ -1,6 +1,3 @@
-// display the name of the location in the respective color
-// clicking on the name will hide it from both the sample and the output, maybe put a line through the name?
-
 function Location(name, dir, color, bounds, sample_box, output_box) {
   this.name = name;
   this.dir = dir;
@@ -121,7 +118,8 @@ Location.prototype.filterRead = function(read) {
     throw "Read is null, in filterRead, in " + this.name;
 
   read = read.map(function(row) {
-    row.time = Date.parse(row.time);
+    // like 2019-09-29 0:00 or 2019-09-29 10:15
+    row.time = moment(row.time, "YYYY-MM-DD H:mm").valueOf();
     return row;
   });
 
@@ -308,6 +306,8 @@ Location.prototype.drawOutput = function(dispatch) {
       .attr("d", function(d) {
         return lineFunction(d);
       });
+
+    dispatch.call(this_loc.getEventName());
   } else {
     let combined_output = this.getSuperSet(output_lag, this.output);
 

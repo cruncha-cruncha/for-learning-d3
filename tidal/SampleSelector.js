@@ -1,12 +1,12 @@
-function SampleSelector(bounds, sample_box) {
+function SampleSelector(bounds, sample_box, locationScales) {
   this.bounds = bounds;
   this.sample_box = sample_box;
+  this.locationScales = locationScales;
   this.bar_width = 5;
   this.spill = 20;
 
-  this.bounds.time_viewbox_max =
-    (this.bounds.time_viewbox_max - this.bounds.time_viewbox_min) * 0.2 +
-    this.bounds.time_viewbox_min;
+  let ten_days = 1000 * 60 * 60 * 24 * 10;
+  this.bounds.time_viewbox_max = this.bounds.time_viewbox_min + ten_days;
 
   this.sample_box.append("g").attr("id", this.getId());
 }
@@ -44,6 +44,8 @@ SampleSelector.prototype.draw = function() {
     this_class.sample_box
   );
 
+  this_class.locationScales.drawDayTicks(innerLeft, innerRight);
+
   let box = this.sample_box.select("#" + this_class.getId());
 
   box.selectAll("rect").remove();
@@ -70,6 +72,8 @@ SampleSelector.prototype.draw = function() {
           } else if (0 >= new_innerLeft + this_class.spill) {
             new_innerLeft = 0 - this_class.spill + 1;
           }
+
+          this_class.locationScales.drawDayTicks(new_innerLeft, innerRight);
 
           box
             .select("#leftBar")
@@ -124,6 +128,8 @@ SampleSelector.prototype.draw = function() {
               1;
           }
 
+          this_class.locationScales.drawDayTicks(innerLeft, new_innerRight);
+
           box.select("#centerRect").attr("width", new_innerRight - innerLeft);
           box.select("#rightBar").attr("x", new_innerRight);
         })
@@ -175,6 +181,8 @@ SampleSelector.prototype.draw = function() {
             new_innerLeft =
               new_innerRight - box.select("#centerRect").attr("width");
           }
+
+          this_class.locationScales.drawDayTicks(new_innerLeft, new_innerRight);
 
           box
             .select("#leftBar")
