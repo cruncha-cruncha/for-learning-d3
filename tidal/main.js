@@ -126,6 +126,12 @@ let location_dispatch = d3.dispatch(
 
 let coastLine = new CoastLine(locations, svg3);
 
+let coastLine_dispatch = d3.dispatch(coastLine.getEventName());
+
+coastLine_dispatch.on(coastLine.getEventName(), function() {
+  coastLine.draw();
+});
+
 locations.forEach(function(loc) {
   loc.readData(files, location_dispatch);
   location_dispatch.on(loc.getEventName(), function() {
@@ -142,7 +148,7 @@ locations.forEach(function(loc) {
         location_dispatch.on(loc.getEventName(), null);
       });
       draw_locations();
-      coastLine.draw();
+      coastLine.readData(coastLine_dispatch);
     }
   });
 });
