@@ -68,10 +68,10 @@ let svg3 = d3
 
 let location_bounds = new Bounds();
 let sample_box = svg1.append("g");
-let sample_box_margin = new Margin(0, 50, 50, 50);
+let sample_box_margin = new Margin(20, 50, 30, 50);
 sample_box_margin.applyTo(sample_box, svg1.attr("width"), svg1.attr("height"));
 let sample_scale_box = svg1.append("g");
-let sample_scale_box_margin = new Margin(100, 50, 0, 50);
+let sample_scale_box_margin = new Margin(120, 50, 0, 50);
 sample_scale_box_margin.applyTo(
   sample_scale_box,
   svg1.attr("width"),

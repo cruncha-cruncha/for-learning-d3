@@ -49,35 +49,60 @@ SampleSelector.prototype.draw = function() {
   let box = this.sample_box.select("#" + this_class.getId());
 
   box.selectAll("rect").remove();
+  box.selectAll("polygon").remove();
+
+  let get_left_bar_coors = function(zero) {
+    return [
+      [zero - this_class.bar_width - 5, 0],
+      [zero, 0],
+      [zero, this_class.sample_box.attr("height")],
+      [zero - this_class.bar_width, this_class.sample_box.attr("height")],
+      [zero - this_class.bar_width, 20],
+      [zero - this_class.bar_width - 5, 10]
+    ];
+  };
 
   box
-    .append("rect")
+    .append("polygon")
     .attr("id", "leftBar")
-    .attr("x", innerLeft - this_class.bar_width)
-    .attr("y", 0)
-    .attr("width", this_class.bar_width)
-    .attr("height", this_class.sample_box.attr("height"))
+    .attr("points", function() {
+      return get_left_bar_coors(innerLeft)
+        .map(function(d) {
+          return d.join(",");
+        })
+        .join(" ");
+    })
     .attr("fill", "black")
+    .attr("stroke", "none")
     .call(
       d3
         .drag()
         .on("drag", function() {
           let new_innerLeft =
-            parseFloat(box.select("#leftBar").attr("x")) +
-            this_class.bar_width +
-            d3.event.dx;
+            parseFloat(box.select("#centerRect").attr("x")) + d3.event.dx;
 
-          if (new_innerLeft >= box.select("#rightBar").attr("x")) {
-            new_innerLeft = box.select("#rightBar").attr("x") - 1;
+          if (
+            new_innerLeft >=
+            parseFloat(box.select("#centerRect").attr("x")) +
+              parseFloat(box.select("#centerRect").attr("width"))
+          ) {
+            new_innerLeft =
+              parseFloat(box.select("#centerRect").attr("x")) +
+              parseFloat(box.select("#centerRect").attr("width")) -
+              1;
           } else if (0 >= new_innerLeft + this_class.spill) {
             new_innerLeft = 0 - this_class.spill + 1;
           }
 
           this_class.locationScales.drawDayTicks(new_innerLeft, innerRight);
 
-          box
-            .select("#leftBar")
-            .attr("x", new_innerLeft - this_class.bar_width);
+          box.select("#leftBar").attr("points", function() {
+            return get_left_bar_coors(new_innerLeft)
+              .map(function(d) {
+                return d.join(",");
+              })
+              .join(" ");
+          });
           box
             .select("#centerRect")
             .attr("x", new_innerLeft)
@@ -93,30 +118,43 @@ SampleSelector.prototype.draw = function() {
         })
     );
 
+  let get_right_bar_coors = function(zero) {
+    return [
+      [zero, 0],
+      [zero + this_class.bar_width + 5, 0],
+      [zero + this_class.bar_width + 5, 10],
+      [zero + this_class.bar_width, 20],
+      [zero + this_class.bar_width, this_class.sample_box.attr("height")],
+      [zero, this_class.sample_box.attr("height")]
+    ];
+  };
+
   box
-    .append("rect")
+    .append("polygon")
     .attr("id", "rightBar")
-    .attr("x", innerRight)
-    .attr("y", 0)
-    .attr("width", this_class.bar_width)
-    .attr("height", this_class.sample_box.attr("height"))
+    .attr("points", function() {
+      return get_right_bar_coors(innerRight)
+        .map(function(d) {
+          return d.join(",");
+        })
+        .join(" ");
+    })
     .attr("fill", "black")
+    .attr("stroke", "none")
     .call(
       d3
         .drag()
         .on("drag", function() {
           let new_innerRight =
-            parseFloat(box.select("#rightBar").attr("x")) + d3.event.dx;
+            parseFloat(box.select("#centerRect").attr("x")) +
+            parseFloat(box.select("#centerRect").attr("width")) +
+            d3.event.dx;
 
           if (
-            parseFloat(box.select("#leftBar").attr("x")) +
-              this_class.bar_width >=
-            new_innerRight
+            parseFloat(box.select("#centerRect").attr("x")) >= new_innerRight
           ) {
             new_innerRight =
-              parseFloat(box.select("#leftBar").attr("x")) +
-              this_class.bar_width +
-              1;
+              parseFloat(box.select("#centerRect").attr("x")) + 1;
           } else if (
             new_innerRight + this_class.bar_width - this_class.spill >=
             this_class.sample_box.attr("width")
@@ -131,7 +169,13 @@ SampleSelector.prototype.draw = function() {
           this_class.locationScales.drawDayTicks(innerLeft, new_innerRight);
 
           box.select("#centerRect").attr("width", new_innerRight - innerLeft);
-          box.select("#rightBar").attr("x", new_innerRight);
+          box.select("#rightBar").attr("points", function() {
+            return get_right_bar_coors(new_innerRight)
+              .map(function(d) {
+                return d.join(",");
+              })
+              .join(" ");
+          });
         })
         .on("end", function() {
           innerRight = box.select("#rightBar").attr("x");
@@ -158,11 +202,11 @@ SampleSelector.prototype.draw = function() {
         .drag()
         .on("drag", function() {
           let new_innerLeft =
-            parseFloat(box.select("#leftBar").attr("x")) +
-            this_class.bar_width +
-            d3.event.dx;
+            parseFloat(box.select("#centerRect").attr("x")) + d3.event.dx;
           let new_innerRight =
-            parseFloat(box.select("#rightBar").attr("x")) + d3.event.dx;
+            parseFloat(box.select("#centerRect").attr("x")) +
+            parseFloat(box.select("#centerRect").attr("width")) +
+            d3.event.dx;
 
           if (0 >= new_innerLeft + this_class.spill) {
             new_innerLeft = 0 - this_class.spill + 1;
@@ -184,11 +228,21 @@ SampleSelector.prototype.draw = function() {
 
           this_class.locationScales.drawDayTicks(new_innerLeft, new_innerRight);
 
-          box
-            .select("#leftBar")
-            .attr("x", new_innerLeft - this_class.bar_width);
+          box.select("#leftBar").attr("points", function() {
+            return get_left_bar_coors(new_innerLeft)
+              .map(function(d) {
+                return d.join(",");
+              })
+              .join(" ");
+          });
           box.select("#centerRect").attr("x", new_innerLeft);
-          box.select("#rightBar").attr("x", new_innerRight);
+          box.select("#rightBar").attr("points", function() {
+            return get_right_bar_coors(new_innerRight)
+              .map(function(d) {
+                return d.join(",");
+              })
+              .join(" ");
+          });
         })
         .on("end", function() {
           innerLeft = box.select("#centerRect").attr("x");
@@ -197,7 +251,9 @@ SampleSelector.prototype.draw = function() {
             this_class.bounds,
             this_class.sample_box
           );
-          innerRight = box.select("#rightBar").attr("x");
+          innerRight =
+            parseFloat(box.select("#centerRect").attr("x")) +
+            parseFloat(box.select("#centerRect").attr("width"));
           this_class.bounds.time_viewbox_max = SampleSelector.reverse_norm_time(
             innerRight,
             this_class.bounds,
