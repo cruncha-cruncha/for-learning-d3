@@ -1,10 +1,11 @@
-function Location(name, dir, color, bounds, sample_box, output_box) {
+function Location(name, dir, color, bounds, sample_box, output_box, coastline_coor) {
   this.name = name;
   this.dir = dir;
   this.color = color;
   this.bounds = bounds;
   this.sample_box = sample_box;
   this.output_box = output_box;
+  this.coastline_coor = coastline_coor;
   this.data = [];
   this.output = [];
   this.output_lag = [];
@@ -22,6 +23,7 @@ Location.prototype.toggleHide = function() {
   tmp.classed("hide", !tmp.classed("hide"));
   tmp = this.output_box.select("#" + this.getOutputBoxId());
   tmp.classed("hide", !tmp.classed("hide"));
+  return tmp.classed("hide");
 };
 
 Location.prototype.getSampleBoxId = function() {

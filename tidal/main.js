@@ -73,6 +73,14 @@ output_X_scale_box_margin.applyTo(
   svg2.attr("height")
 );
 
+/*
+coastline_coors
+Prince Rupert: 550, 125
+Bella Bella: 550, 290 - 300
+Tofino: 525, 500 - 510
+Vancouver: 630, 610
+*/
+
 let locations = [
   new Location(
     "Bella Bella",
@@ -80,7 +88,8 @@ let locations = [
     "#76cca2",
     location_bounds,
     sample_box,
-    output_box
+    output_box,
+    [svg3.attr("width") / 1.20636364, svg3.attr("width") / 2.5037735849]
   ),
   new Location(
     "Prince Rupert",
@@ -88,7 +97,8 @@ let locations = [
     "#45716e",
     location_bounds,
     sample_box,
-    output_box
+    output_box,
+    [svg3.attr("width") / 1.20636364, svg3.attr("width") / 5.438524590]
   ),
   new Location(
     "Tofino",
@@ -96,7 +106,8 @@ let locations = [
     "#3a6cc0",
     location_bounds,
     sample_box,
-    output_box
+    output_box,
+    [svg3.attr("width") / 1.26380952, svg3.attr("width") / 1.31386]
   ),
   new Location(
     "Vancouver",
@@ -104,7 +115,8 @@ let locations = [
     "#58a7e4",
     location_bounds,
     sample_box,
-    output_box
+    output_box,
+    [svg3.attr("width") / 1.0531746, svg3.attr("width") / 1.087704918]
   )
 ];
 
