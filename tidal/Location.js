@@ -1,4 +1,12 @@
-function Location(name, dir, color, bounds, sample_box, output_box, coastline_coor) {
+function Location(
+  name,
+  dir,
+  color,
+  bounds,
+  sample_box,
+  output_box,
+  coastline_coor
+) {
   this.name = name;
   this.dir = dir;
   this.color = color;
@@ -115,9 +123,9 @@ Location.prototype.updateBounds = function(viewbox = true) {
   return boundsChange;
 };
 
-Location.prototype.filterRead = function(read) {
+Location.prototype.convertTime = function(read) {
   if (read == null || read.length == 0)
-    throw "Read is null, in filterRead, in " + this.name;
+    throw "Read is null, in convertTime, in " + this.name;
 
   read = read.map(function(row) {
     // like 2019-09-29 0:00 or 2019-09-29 10:15
@@ -141,7 +149,7 @@ Location.prototype.readData = function(files, dispatch) {
   files.forEach(function(file, i) {
     d3.csv("datasets/clean/" + this_loc.dir + "/" + file)
       .then(function(read) {
-        read = this_loc.filterRead(read);
+        read = this_loc.convertTime(read);
         this_loc.data = this_loc.data.concat(read);
         barrier[i] = true;
         if (

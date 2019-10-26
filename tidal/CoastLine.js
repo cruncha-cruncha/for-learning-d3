@@ -223,7 +223,8 @@ CoastLine.prototype.draw_text = function(text_width) {
     .attr("stroke", function(d) {
       return d.color;
     })
-    .attr("stroke-width", 1);
+    .attr("stroke-width", 1)
+    .classed("cursor-pointer", true);
 
   this.box
     .select("#" + this_class.getTextBoxId())
@@ -241,6 +242,7 @@ CoastLine.prototype.draw_text = function(text_width) {
       return d.name;
     })
     .style("fill", "black")
+    .classed("cursor-pointer", true)
     .on("click", function(d, i) {
       let hidden = d.toggleHide();
       if (hidden) {
