@@ -19,7 +19,7 @@ let svg1 = d3
     "width",
     $("body")
       .first()
-      .innerWidth()
+      .innerWidth() - 10
   )
   .attr("height", 150);
 
@@ -29,7 +29,7 @@ let svg2 = d3
     "width",
     $("body")
       .first()
-      .innerWidth()
+      .innerWidth() - 10
   )
   .attr("height", 620);
 
@@ -39,13 +39,17 @@ let svg3 = d3
     "width",
     $("body")
       .first()
-      .innerWidth() / 2
+      .innerWidth() /
+      2 -
+      10
   )
   .attr(
     "height",
     $("body")
       .first()
-      .innerWidth() / 2
+      .innerWidth() /
+      2 -
+      10
   );
 
 let location_bounds = new Bounds();
@@ -98,7 +102,7 @@ let locations = [
     location_bounds,
     sample_box,
     output_box,
-    [svg3.attr("width") / 1.20636364, svg3.attr("width") / 5.438524590]
+    [svg3.attr("width") / 1.20636364, svg3.attr("width") / 5.43852459]
   ),
   new Location(
     "Tofino",
