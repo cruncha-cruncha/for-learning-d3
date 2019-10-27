@@ -276,7 +276,7 @@ LocationScales.prototype.drawYoutput = function() {
   enter_encoder
     .append("text")
     .text(function(d, i) {
-      if (i === 0 || i === data.length - 1 || i % 2 !== 1) {
+      if (i === 0 || i % 2 !== 1) {
         return "";
       } else {
         return d;

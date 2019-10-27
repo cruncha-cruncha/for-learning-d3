@@ -75,8 +75,8 @@ Location.prototype.updateBounds = function(viewbox = true) {
     return d.encoder;
   });
 
-  local_encoder_min = Math.floor(local_encoder_min);
-  local_encoder_max = Math.ceil(local_encoder_max);
+  local_encoder_min = Math.floor(local_encoder_min * 2) / 2;
+  local_encoder_max = Math.ceil(local_encoder_max * 2) / 2;
 
   let boundsChange = false;
 
