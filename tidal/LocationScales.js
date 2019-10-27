@@ -323,6 +323,11 @@ LocationScales.prototype.drawXoutput = function() {
     }
     x += one_day;
   }
+  if (x % one_week === this_scale.bounds.time_min % one_week) {
+    ticks.push({ value: x, length: 20 });
+  } else {
+    ticks.push({ value: x, length: 8 });
+  }
 
   let tick_box = this.output_X_box.selectAll("line").data(ticks, function(d) {
     return d.value;
