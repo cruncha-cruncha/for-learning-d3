@@ -154,10 +154,100 @@ CoastLine.prototype.draw = function() {
       return lineFunction(d);
     });
 
-  text_width = [];
+  // can use .transition().duration(0).on("end", function() { ... })
+  // to execute something after draw has been completed
+};
+
+CoastLine.prototype.draw_text = function() {
+  let this_class = this;
+
+  let actually_draw_text = function(text_width) {
+    let offset_x = -24;
+    let offset_y = 5;
+    let rect_pad = 8;
+
+    this_class.box
+      .select("#" + this_class.getTextBoxId())
+      .selectAll("circle")
+      .data(this_class.locations)
+      .enter()
+      .append("circle")
+      .attr("cx", function(d) {
+        return d.coastline_coor[0];
+      })
+      .attr("cy", function(d) {
+        return d.coastline_coor[1];
+      })
+      .attr("r", 7)
+      .attr("fill", "white")
+      .attr("stroke", function(d) {
+        return d.color;
+      })
+      .attr("stroke-width", 6);
+
+    this_class.box
+      .select("#" + this_class.getTextBoxId())
+      .selectAll("rect")
+      .data(this_class.locations)
+      .enter()
+      .append("rect")
+      .attr("x", function(d, i) {
+        return d.coastline_coor[0] - text_width[i] - rect_pad + offset_x;
+      })
+      .attr("y", function(d) {
+        return d.coastline_coor[1] - 20 + offset_y;
+      })
+      .attr("rx", 4)
+      .attr("ry", 4)
+      .attr("width", function(d, i) {
+        return text_width[i] + rect_pad * 2;
+      })
+      .attr("height", function(d) {
+        return 20 + rect_pad;
+      })
+      .attr("fill", "white")
+      .attr("fill-opacity", 0.8)
+      .attr("stroke", function(d) {
+        return d.color;
+      })
+      .attr("stroke-width", 1)
+      .classed("cursor-pointer", true);
+
+    this_class.box
+      .select("#" + this_class.getTextBoxId())
+      .selectAll("text")
+      .data(this_class.locations)
+      .enter()
+      .append("text")
+      .attr("x", function(d, i) {
+        return d.coastline_coor[0] - text_width[i] + offset_x;
+      })
+      .attr("y", function(d) {
+        return d.coastline_coor[1] + offset_y;
+      })
+      .text(function(d) {
+        return d.name;
+      })
+      .style("fill", "black")
+      .classed("cursor-pointer", true)
+      .on("click", function(d, i) {
+        let hidden = d.toggleHide();
+        if (hidden) {
+          d3.select(this)
+            .style("fill", "grey")
+            .style("text-decoration", "line-through");
+        } else {
+          d3.select(this)
+            .style("fill", "black")
+            .style("text-decoration", "none");
+        }
+      })
+  };
+
+  let text_width = [];
   this.box
     .selectAll("text")
-    .data(this.locations)
+    .data(this_class.locations)
     .enter()
     .append("text")
     .text(function(d) {
@@ -167,88 +257,7 @@ CoastLine.prototype.draw = function() {
       text_width.push(this.getComputedTextLength());
       this.remove();
       if (i + 1 == this_class.locations.length) {
-        this_class.draw_text(text_width);
-      }
-    });
-};
-
-CoastLine.prototype.draw_text = function(text_width) {
-  let this_class = this;
-
-  let offset_x = -24;
-  let offset_y = 5;
-  let rect_pad = 8;
-
-  this.box
-    .select("#" + this_class.getTextBoxId())
-    .selectAll("circle")
-    .data(this.locations)
-    .enter()
-    .append("circle")
-    .attr("cx", function(d) {
-      return d.coastline_coor[0];
-    })
-    .attr("cy", function(d) {
-      return d.coastline_coor[1];
-    })
-    .attr("r", 7)
-    .attr("fill", "white")
-    .attr("stroke", function(d) {
-      return d.color;
-    })
-    .attr("stroke-width", 6);
-
-  this.box
-    .select("#" + this_class.getTextBoxId())
-    .selectAll("rect")
-    .data(this.locations)
-    .enter()
-    .append("rect")
-    .attr("x", function(d, i) {
-      return d.coastline_coor[0] - text_width[i] - rect_pad + offset_x;      
-    })
-    .attr("y", function(d) {
-      return d.coastline_coor[1] - 20 + offset_y;
-    })
-    .attr("rx", 4)
-    .attr("ry", 4)
-    .attr("width", function(d, i) {
-      return text_width[i] + (rect_pad * 2);  
-    })
-    .attr("height", function(d) {
-      return 20 + rect_pad;
-    })
-    .attr("fill", "white")
-    .attr("fill-opacity", 0.8)
-    .attr("stroke", function(d) {
-      return d.color;
-    })
-    .attr("stroke-width", 1)
-    .classed("cursor-pointer", true);
-
-  this.box
-    .select("#" + this_class.getTextBoxId())
-    .selectAll("text")
-    .data(this.locations)
-    .enter()
-    .append("text")
-    .attr("x", function(d, i) {
-      return d.coastline_coor[0] - text_width[i] + offset_x;
-    })
-    .attr("y", function(d) {
-      return d.coastline_coor[1] + offset_y;
-    })
-    .text(function(d) {
-      return d.name;
-    })
-    .style("fill", "black")
-    .classed("cursor-pointer", true)
-    .on("click", function(d, i) {
-      let hidden = d.toggleHide();
-      if (hidden) {
-        d3.select(this).style("fill", "grey").style("text-decoration", "line-through");
-      } else {
-        d3.select(this).style("fill", "black").style("text-decoration", "none");
+        actually_draw_text(text_width);
       }
     });
 };

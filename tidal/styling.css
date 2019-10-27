@@ -1,6 +1,7 @@
 body, html
 {
     min-height: 101vh;
+    color: #212529;
 }
 
 .hide {

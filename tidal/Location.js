@@ -136,8 +136,8 @@ Location.prototype.convertTime = function(read) {
   return read;
 };
 
-Location.prototype.readData = function(files, dispatch) {
-  if (files == null || files.length == 0 || dispatch == null)
+Location.prototype.readData = function(files, done_dispatch, update_dispatch) {
+  if (files == null || files.length == 0 || done_dispatch == null || update_dispatch == null)
     throw "Bad input to readData, in " + this.name;
 
   let this_loc = this;
@@ -146,11 +146,12 @@ Location.prototype.readData = function(files, dispatch) {
     return false;
   });
 
-  files.forEach(function(file, i) {
-    d3.csv("datasets/clean/" + this_loc.dir + "/" + file)
+  let readData_serial = function(i) {
+    d3.csv("datasets/clean/" + this_loc.dir + "/" + files[i])
       .then(function(read) {
         read = this_loc.convertTime(read);
         this_loc.data = this_loc.data.concat(read);
+        update_dispatch.call(this_loc.getEventName(), this, files[i]);
         barrier[i] = true;
         if (
           barrier.every(e => {
@@ -160,13 +161,18 @@ Location.prototype.readData = function(files, dispatch) {
           this_loc.data = this_loc.sortData(this_loc.data);
           this_loc.updateSample();
           this_loc.done_read = true;
-          dispatch.call(this_loc.getEventName());
+          done_dispatch.call(this_loc.getEventName());
+        }
+        if (i + 1 < files.length) {
+          readData_serial(i+1);
         }
       })
       .catch(function(error) {
         console.log(error);
       });
-  });
+  }
+
+  readData_serial(0);
 };
 
 Location.prototype.updateViewbox = function(
