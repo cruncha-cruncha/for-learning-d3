@@ -255,6 +255,8 @@ let go = function(svg4) {
     sampleSelector.updateBounds();
     sampleSelector.draw();
 
+    let moonSelector = new MoonSelector(output_box, location_bounds);
+
     let barrier;
 
     locations.forEach(function(loc, i) {
@@ -267,6 +269,7 @@ let go = function(svg4) {
         ) {
           sampleSelector.updateBounds();
           locationScales.drawXoutput();
+          moonSelector.draw();
         }
       });
     });
@@ -280,6 +283,7 @@ let go = function(svg4) {
 
         locationScales.drawYoutput();
         locationScales.removeXoutput();
+        moonSelector.remove();
 
         locations.forEach(function(loc) {
           loc.updateOutput();
