@@ -178,7 +178,9 @@ SampleSelector.prototype.draw = function() {
           });
         })
         .on("end", function() {
-          innerRight = box.select("#rightBar").attr("x");
+          innerRight =
+            parseFloat(box.select("#centerRect").attr("x")) +
+            parseFloat(box.select("#centerRect").attr("width"));
           this_class.bounds.time_viewbox_max = SampleSelector.reverse_norm_time(
             innerRight,
             this_class.bounds,
