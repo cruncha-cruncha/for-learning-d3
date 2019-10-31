@@ -104,6 +104,21 @@ let go = function(svg4) {
         .width()
     );
 
+  let svg5 = d3
+    .select("#svg5")
+    .attr(
+      "width",
+      $("#svg5")
+        .parent()
+        .width()
+    )
+    .attr(
+      "height",
+      $("#svg5")
+        .parent()
+        .width()
+    );
+
   let location_bounds = new Bounds();
   let sample_box = svg1.append("g");
   let sample_box_margin = new Margin(20, 50, 30, 50);
@@ -255,7 +270,7 @@ let go = function(svg4) {
     sampleSelector.updateBounds();
     sampleSelector.draw();
 
-    let moonSelector = new MoonSelector(output_box, location_bounds);
+    let moonSelector = new MoonSelector(output_box, location_bounds, svg5);
 
     let barrier;
 

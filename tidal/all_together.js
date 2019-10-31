@@ -9,6 +9,8 @@ jQuery(function($) {
 
   @@include('./LocationScales.js')
 
+  @@include('./MoonNormal.js')
+
   @@include('./MoonSelector.js')
 
   @@include('./main.js')

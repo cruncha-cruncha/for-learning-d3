@@ -1,8 +1,8 @@
-function MoonSelector(output_box, bounds) {
+function MoonSelector(output_box, bounds, moon_box) {
   this.output_box = output_box;
   this.bounds = bounds;
   this.x = this.output_box.attr("width") / 2;
-  //this.moonNormal = new MoonNormal();
+  this.moonNormal = new MoonNormal(moon_box, bounds);
   //this.moonEcliptic = new MoonEcliptic();
   // https://www.moongiant.com/phase/9/14/2019
 
@@ -14,6 +14,9 @@ MoonSelector.prototype.getId = function() {
 };
 
 MoonSelector.prototype.draw = function() {
+  this.moonNormal.setTime(this.getTime());
+  this.moonNormal.draw();
+
   let box = this.output_box.select("#" + this.getId());
 
   let this_class = this;
@@ -50,30 +53,29 @@ MoonSelector.prototype.draw = function() {
     .attr("fill", "black")
     .attr("stroke", "none")
     .call(
-      d3
-        .drag()
-        .on("drag", function() {
-          let new_x = this_class.x + d3.event.dx;
-          if (new_x < 0) {
-            new_x = 0;
-          } else if (new_x > this_class.output_box.attr("width")) {
-            new_x = parseFloat(this_class.output_box.attr("width"));
-          }
+      d3.drag().on("drag", function() {
+        let new_x = this_class.x + d3.event.dx;
+        if (new_x < 0) {
+          new_x = 0;
+        } else if (new_x > this_class.output_box.attr("width")) {
+          new_x = parseFloat(this_class.output_box.attr("width"));
+        }
 
-          this_class.x = new_x;
-          box.select("polygon").attr("points", function() {
-            return get_poly_coors(this_class.x)
-              .map(function(d) {
-                return d.join(",");
-              })
-              .join(" ");
-          });
-          //this_class.moonNormal.update(this_class.getTime());
-        })
+        this_class.x = new_x;
+        box.select("polygon").attr("points", function() {
+          return get_poly_coors(this_class.x)
+            .map(function(d) {
+              return d.join(",");
+            })
+            .join(" ");
+        });
+        this_class.moonNormal.update(this_class.getTime());
+      })
     );
 };
 
 MoonSelector.prototype.remove = function() {
+  this.moonNormal.remove();
   let box = this.output_box.select("#" + this.getId());
   box.select("polygon").remove();
 };
