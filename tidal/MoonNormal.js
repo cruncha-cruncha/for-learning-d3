@@ -334,4 +334,11 @@ MoonNormal.prototype.draw = function() {
   drawMoon();
 };
 
-MoonNormal.prototype.remove = function() {};
+MoonNormal.prototype.remove = function() {
+  let box = this.box;
+  box.selectAll("#moon-normal-moon-padding").remove();
+  box.selectAll("#moon-normal-moon").remove();
+  box.selectAll("#moon-normal-moon-shadow").remove();
+  box.selectAll(".moon-normal-slice-line").remove();
+  box.selectAll("#moon-normal-slice-arc").remove();
+};
