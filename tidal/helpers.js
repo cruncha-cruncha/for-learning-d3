@@ -36,3 +36,6 @@ let addDays = function(time, days) {
   out.setDate(date.getDate() + days);
   return out.getTime();
 };
+
+// Vancouver is UTC-7 during daylight savings
+let ZONE_OFFSET = 1000 * 60 * 60 * 7;

@@ -4,8 +4,7 @@ import errno
 
 # taken from
 # http://tides.gc.ca/eng/data
-
-# http://www.naturalearthdata.com/downloads/10m-physical-vectors/
+# using UTC (Z+0)
 
 OUTPUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "clean")
 

@@ -129,7 +129,7 @@ Location.prototype.convertTime = function(read) {
 
   read = read.map(function(row) {
     // like 2019-09-29 0:00 or 2019-09-29 10:15
-    row.time = moment(row.time, "YYYY-MM-DD H:mm").valueOf();
+    row.time = moment.utc(row.time, "YYYY-MM-DD H:mm").valueOf();
     return row;
   });
 

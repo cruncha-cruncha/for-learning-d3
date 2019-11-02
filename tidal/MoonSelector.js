@@ -6,6 +6,8 @@ function MoonSelector(output_box, bounds, moon_box) {
   //this.moonEcliptic = new MoonEcliptic();
   // https://www.moongiant.com/phase/9/14/2019
 
+  // should indicate to the user that we are selecting Vancouver time, and that is the leading edge of the MoonNormal slice
+
   this.output_box.append("g").attr("id", this.getId());
 }
 
@@ -14,8 +16,7 @@ MoonSelector.prototype.getId = function() {
 };
 
 MoonSelector.prototype.draw = function() {
-  this.moonNormal.setTime(this.getTime());
-  this.moonNormal.draw();
+  this.moonNormal.update(this.getTime());
 
   let box = this.output_box.select("#" + this.getId());
 

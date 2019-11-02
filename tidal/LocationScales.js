@@ -37,7 +37,7 @@ LocationScales.prototype.drawSample = function() {
   let weeks = [];
   x = this.bounds.time_min;
   while (x <= this.bounds.time_max) {
-    weeks.push({ name: moment(x).format("MMM D"), value: x });
+    weeks.push({ name: moment.utc(x).format("MMM D"), value: x });
     x += one_week;
   }
   weeks[0].name = "";
@@ -61,7 +61,7 @@ LocationScales.prototype.drawSample = function() {
     .append("line")
     .attr("x1", function(d) {
       return SampleSelector.norm_time(
-        d.value,
+        d.value + ZONE_OFFSET,
         this_scale.bounds,
         this_scale.sample_box
       );
@@ -69,7 +69,7 @@ LocationScales.prototype.drawSample = function() {
     .attr("y1", 0)
     .attr("x2", function(d) {
       return SampleSelector.norm_time(
-        d.value,
+        d.value + ZONE_OFFSET,
         this_scale.bounds,
         this_scale.sample_box
       );
@@ -86,7 +86,7 @@ LocationScales.prototype.drawSample = function() {
     .attr("x", function(d) {
       return (
         SampleSelector.norm_time(
-          d.value,
+          d.value + ZONE_OFFSET,
           this_scale.bounds,
           this_scale.sample_box
         ) + this_scale.TEXT_OFFSET
@@ -108,7 +108,6 @@ LocationScales.prototype.drawDayTicks = function(innerLeft, innerRight) {
     this.sample_box
   );
 
-  let utc_offset = 1000 * 60 * moment().utcOffset();
   let one_day = 1000 * 60 * 60 * 24;
   let one_week = one_day * 7;
 
@@ -116,17 +115,17 @@ LocationScales.prototype.drawDayTicks = function(innerLeft, innerRight) {
   let this_scale = this;
 
   let ticks = [];
-  x = innerLeft - ((innerLeft + utc_offset) % one_day);
+  x = innerLeft - (innerLeft % one_day);
   while (x < innerRight) {
     if (this.bounds.time_min <= x && x < this.bounds.time_min + one_week) {
-      ticks.push({ name: moment(x).format("ddd")[0], value: x });
+      ticks.push({ name: moment.utc(x).format("ddd")[0], value: x });
     } else {
       ticks.push({ name: "", value: x });
     }
     x += one_day;
   }
   if (this.bounds.time_min <= x && x < this.bounds.time_min + one_week) {
-    ticks.push({ name: moment(x).format("ddd")[0], value: x });
+    ticks.push({ name: moment.utc(x).format("ddd")[0], value: x });
   } else {
     ticks.push({ name: "", value: x });
   }
@@ -143,7 +142,7 @@ LocationScales.prototype.drawDayTicks = function(innerLeft, innerRight) {
     .append("line")
     .attr("x1", function(d) {
       return SampleSelector.norm_time(
-        d.value,
+        d.value + ZONE_OFFSET,
         this_scale.bounds,
         this_scale.sample_box
       );
@@ -151,7 +150,7 @@ LocationScales.prototype.drawDayTicks = function(innerLeft, innerRight) {
     .attr("y1", 0)
     .attr("x2", function(d) {
       return SampleSelector.norm_time(
-        d.value,
+        d.value + ZONE_OFFSET,
         this_scale.bounds,
         this_scale.sample_box
       );
@@ -200,7 +199,7 @@ LocationScales.prototype.drawDayTicks = function(innerLeft, innerRight) {
     .attr("x", function(d) {
       return (
         SampleSelector.norm_time(
-          d.value + one_day / 2,
+          d.value + ZONE_OFFSET + one_day / 2,
           this_scale.bounds,
           this_scale.sample_box
         ) -
@@ -299,7 +298,6 @@ LocationScales.prototype.removeXoutput = function() {
 };
 
 LocationScales.prototype.drawXoutput = function() {
-  let utc_offset = 1000 * 60 * moment().utcOffset();
   let one_hour = 1000 * 60 * 60;
   let one_day = 1000 * 60 * 60 * 24;
   let one_week = one_day * 7;
@@ -308,12 +306,12 @@ LocationScales.prototype.drawXoutput = function() {
   let this_scale = this;
 
   let ticks = [];
-  if ((this.bounds.time_viewbox_min + utc_offset) % one_day < one_hour) {
+  if (this.bounds.time_viewbox_min % one_day < one_hour) {
     x = this.bounds.time_viewbox_min;
   } else {
     x =
       this.bounds.time_viewbox_min -
-      ((this.bounds.time_viewbox_min + utc_offset) % one_day);
+      (this.bounds.time_viewbox_min % one_day);
   }
   while (x < this.bounds.time_viewbox_max + one_hour) {
     if (x % one_week === this_scale.bounds.time_min % one_week) {
@@ -338,7 +336,7 @@ LocationScales.prototype.drawXoutput = function() {
     .append("line")
     .attr("x1", function(d) {
       return (
-        ((d.value - this_scale.bounds.time_viewbox_min) /
+        ((d.value + ZONE_OFFSET - this_scale.bounds.time_viewbox_min) /
           (this_scale.bounds.time_viewbox_max -
             this_scale.bounds.time_viewbox_min)) *
         this_scale.output_X_box.attr("width")
@@ -347,7 +345,7 @@ LocationScales.prototype.drawXoutput = function() {
     .attr("y1", 0)
     .attr("x2", function(d) {
       return (
-        ((d.value - this_scale.bounds.time_viewbox_min) /
+        ((d.value + ZONE_OFFSET - this_scale.bounds.time_viewbox_min) /
           (this_scale.bounds.time_viewbox_max -
             this_scale.bounds.time_viewbox_min)) *
         this_scale.output_X_box.attr("width")
