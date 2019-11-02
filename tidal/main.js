@@ -166,6 +166,24 @@ let go = function(svg4) {
 
   let locations = [
     new Location(
+      "Vancouver",
+      "Vancouver",
+      "#58a7e4",
+      location_bounds,
+      sample_box,
+      output_box,
+      [svg3.attr("width") / 1.0531746, svg3.attr("width") / 1.087704918]
+    ),
+    new Location(
+      "Tofino",
+      "Tofino",
+      "#3a6cc0",
+      location_bounds,
+      sample_box,
+      output_box,
+      [svg3.attr("width") / 1.26380952, svg3.attr("width") / 1.31386]
+    ),
+    new Location(
       "Bella Bella",
       "Bella_Bella",
       "#76cca2",
@@ -182,24 +200,6 @@ let go = function(svg4) {
       sample_box,
       output_box,
       [svg3.attr("width") / 1.20636364, svg3.attr("width") / 5.43852459]
-    ),
-    new Location(
-      "Tofino",
-      "Tofino",
-      "#3a6cc0",
-      location_bounds,
-      sample_box,
-      output_box,
-      [svg3.attr("width") / 1.26380952, svg3.attr("width") / 1.31386]
-    ),
-    new Location(
-      "Vancouver",
-      "Vancouver",
-      "#58a7e4",
-      location_bounds,
-      sample_box,
-      output_box,
-      [svg3.attr("width") / 1.0531746, svg3.attr("width") / 1.087704918]
     )
   ];
 
@@ -270,7 +270,7 @@ let go = function(svg4) {
     sampleSelector.updateBounds();
     sampleSelector.draw();
 
-    let moonSelector = new MoonSelector(output_box, location_bounds, svg5);
+    let moonSelector = new MoonSelector(output_box, location_bounds, svg5, locations);
 
     let barrier;
 

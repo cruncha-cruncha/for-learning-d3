@@ -1,5 +1,6 @@
-function MoonNormal(box, bounds) {
+function MoonNormal(box, bounds, locations) {
   this.box = box;
+  this.locations = locations;
   this.time = null;
   this.time_max = bounds.time_max;
   this.time_min = bounds.time_min;
@@ -23,16 +24,11 @@ MoonNormal.prototype.draw = function() {
 
   let orbit_r = this_class.box.attr("width") / 2 - this.fake_moon_r - 2;
 
-  // 384400 = km from earth to moon
-  // 12742 = diameter of earth in km
-  // 3474.2 = diameter of moon in km
+  let earth_x = this_class.box.attr("width") / 2;
+  let earth_y = this_class.box.attr("height") / 2;
 
   let drawOrbit = function() {
-    data = [
-      this_class.box.attr("width") / 2,
-      this_class.box.attr("height") / 2,
-      orbit_r
-    ];
+    data = [earth_x, earth_y, orbit_r];
     box
       .selectAll("#moon-normal-orbit")
       .data([data])
@@ -129,86 +125,82 @@ MoonNormal.prototype.draw = function() {
     // the sun is off the left of the screen, so solar noon occurs at the 9 o'clock position
     let slice_position = Math.PI * (1 / 2) + rotations * Math.PI * 2;
 
-    box.selectAll("#moon-normal-slice").remove();
-    box.selectAll("#moon-normal-slice-arc").remove();
-
     let small_r = this_class.fake_earth_r + 10;
-    let large_r = small_r + 30;
+    let larger_r = small_r + 60;
     let angle = 8 * (Math.PI / 180); // Prince Rupert is about 8 degrees west of Vancouver
     let half_arc = 20 * (Math.PI / 180);
 
-    data = [
-      [
-        this_class.box.attr("width") / 2 - small_r * Math.sin(slice_position),
-        this_class.box.attr("height") / 2 - small_r * Math.cos(slice_position)
-      ],
-      [
-        this_class.box.attr("width") / 2 -
-          small_r * Math.sin(slice_position + angle),
-        this_class.box.attr("height") / 2 -
-          small_r * Math.cos(slice_position + angle)
-      ],
-      [
-        this_class.box.attr("width") / 2 -
-          large_r * Math.sin(slice_position + angle),
-        this_class.box.attr("height") / 2 -
-          large_r * Math.cos(slice_position + angle)
-      ],
-      [
-        this_class.box.attr("width") / 2 - large_r * Math.sin(slice_position),
-        this_class.box.attr("height") / 2 - large_r * Math.cos(slice_position)
-      ]
-    ];
+    let almost_location_length = this_class.locations.length - 1;
+    data = this_class.locations.map(function(elem, i) {
+      return [
+        [
+          earth_x -
+            small_r *
+              Math.sin(slice_position - angle * (i / almost_location_length)),
+          earth_y -
+            small_r *
+              Math.cos(slice_position - angle * (i / almost_location_length))
+        ],
+        [
+          earth_x -
+            larger_r *
+              Math.sin(slice_position - angle * (i / almost_location_length)),
+          earth_y -
+            larger_r *
+              Math.cos(slice_position - angle * (i / almost_location_length))
+        ]
+      ];
+    });
 
     box
-      .selectAll("#moon-normal-slice")
-      .data([data])
-      .enter()
-      .append("polygon")
-      .attr("id", "moon-normal-slice")
-      .attr("points", function(d) {
-        return (
-          d[0][0] +
-          "," +
-          d[0][1] +
-          " " +
-          d[1][0] +
-          "," +
-          d[1][1] +
-          " " +
-          d[2][0] +
-          "," +
-          d[2][1] +
-          " " +
-          d[3][0] +
-          "," +
-          d[3][1]
-        );
+      .selectAll(".moon-normal-slice-line")
+      .data(data)
+      .attr("x1", function(d) {
+        return d[0][0];
       })
-      .attr("fill", "black")
-      .attr("stroke", "none");
+      .attr("y1", function(d) {
+        return d[0][1];
+      })
+      .attr("x2", function(d) {
+        return d[1][0];
+      })
+      .attr("y2", function(d) {
+        return d[1][1];
+      })
+      .enter()
+      .append("line")
+      .attr("class", "moon-normal-slice-line")
+      .attr("x1", function(d) {
+        return d[0][0];
+      })
+      .attr("y1", function(d) {
+        return d[0][1];
+      })
+      .attr("x2", function(d) {
+        return d[1][0];
+      })
+      .attr("y2", function(d) {
+        return d[1][1];
+      })
+      .attr("stroke", function(d, i) {
+        return this_class.locations[i].color;
+      })
+      .attr("stroke-width", 3);
 
     data = [
       [
-        this_class.box.attr("width") / 2 -
-          small_r * Math.sin(slice_position - half_arc),
-        this_class.box.attr("height") / 2 -
-          small_r * Math.cos(slice_position - half_arc)
+        earth_x - small_r * Math.sin(slice_position + half_arc),
+        earth_y - small_r * Math.cos(slice_position + half_arc)
       ],
       [
-        this_class.box.attr("width") / 2 -
-          small_r * Math.sin(slice_position + angle + half_arc),
-        this_class.box.attr("height") / 2 -
-          small_r * Math.cos(slice_position + angle + half_arc)
+        earth_x - small_r * Math.sin(slice_position - angle - half_arc),
+        earth_y - small_r * Math.cos(slice_position - angle - half_arc)
       ]
     ];
 
     box
       .selectAll("#moon-normal-slice-arc")
       .data([data])
-      .enter()
-      .append("path")
-      .attr("id", "moon-normal-slice-arc")
       .attr("d", function(d) {
         return (
           "M" +
@@ -219,10 +211,29 @@ MoonNormal.prototype.draw = function() {
           small_r +
           "," +
           small_r +
-          " 0 0 0 " +
+          " 0 0 1 " +
           (d[1][0] - d[0][0]) +
           "," +
           (d[1][1] - d[0][1])
+        );
+      })
+      .enter()
+      .append("path")
+      .attr("id", "moon-normal-slice-arc")
+      .attr("d", function(d) {
+        return (
+          "M" +
+          d[0][0] +
+          "," +
+          d[0][1] +
+          " A" +
+          small_r +
+          "," +
+          small_r +
+          " 0 0 1 " +
+          d[1][0] +
+          "," +
+          d[1][1]
         );
       })
       .attr("fill", "none")
@@ -244,10 +255,8 @@ MoonNormal.prototype.draw = function() {
     // the sun is off the left of the screen, so a full moon occurs at the 3 o'clock position
     let moon_position = Math.PI * (3 / 2) + rotations * Math.PI * 2;
 
-    let mx =
-      this_class.box.attr("width") / 2 - orbit_r * Math.sin(moon_position);
-    let my =
-      this_class.box.attr("height") / 2 - orbit_r * Math.cos(moon_position);
+    let mx = earth_x - orbit_r * Math.sin(moon_position);
+    let my = earth_y - orbit_r * Math.cos(moon_position);
 
     data = [mx, my, this_class.fake_moon_r];
     box
